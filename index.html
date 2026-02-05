@@ -1,0 +1,89 @@
+<script>
+
+let lastID="";
+let latestText="";
+
+function convertScale(scale){
+ if(scale==10)return "震度1";
+ if(scale==20)return "震度2";
+ if(scale==30)return "震度3";
+ if(scale==40)return "震度4";
+ if(scale==45)return "震度5弱";
+ if(scale==50)return "震度5強";
+ if(scale==55)return "震度6弱";
+ if(scale==60)return "震度6強";
+ if(scale==70)return "震度7";
+ return scale || "-";
+}
+
+async function loadQuake(){
+
+ try{
+
+ const res = await fetch("https://api.p2pquake.net/v2/history?limit=1");
+ const json = await res.json();
+ const data = json[0];
+
+ if(!data){
+   document.getElementById("quake").innerText="データなし";
+   return;
+ }
+
+ let text="最新情報取得中";
+
+ // ⭐ 緊急地震速報
+ if(data.code==556 && data.earthquake){
+
+   const serial=data.issue?.serial || "";
+   const place=data.earthquake.hypocenter?.name || "-";
+   const mag=data.earthquake.hypocenter?.magnitude || "-";
+   const scale=convertScale(data.earthquake.maxScale);
+
+   text=`【緊急地震速報 第${serial}報】
+震源：${place}
+M${mag}
+最大${scale}`;
+ }
+
+ // ⭐ 通常地震情報
+ else if(data.code==551 && data.earthquake){
+
+   const place=data.earthquake.hypocenter?.name || "-";
+   const mag=data.earthquake.hypocenter?.magnitude || "-";
+   const scale=convertScale(data.earthquake.maxScale);
+
+   text=`【地震情報】
+震源：${place}
+M${mag}
+最大${scale}`;
+ }
+
+ // ⭐ その他データ（これが重要）
+ else{
+
+   text="最新地震情報待機中...";
+ }
+
+ latestText=text;
+
+ document.getElementById("quake").innerHTML=
+ `<div class="card">${text}</div>`;
+
+ }catch(e){
+
+   document.getElementById("quake").innerText="取得エラー";
+   console.log(e);
+
+ }
+
+}
+
+function copyText(){
+ navigator.clipboard.writeText(latestText);
+ alert("コピーしました");
+}
+
+loadQuake();
+setInterval(loadQuake,5000);
+
+</script>
