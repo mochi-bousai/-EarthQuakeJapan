@@ -18,16 +18,9 @@ body{
  padding:10px;
  margin-top:10px;
 }
-.eewForecast{
- background:#e8f4ff;
-}
-.eewWarning{
- background:#ffe5e5;
-}
-button{
- margin-top:10px;
- padding:8px;
-}
+.eewForecast{background:#e8f4ff;}
+.eewWarning{background:#ffe5e5;}
+button{margin-top:10px;padding:8px;}
 </style>
 </head>
 
@@ -48,32 +41,25 @@ let lastID = "";
 let latestText = "";
 
 function convertScale(scale){
- if(scale == 10) return "震度1";
- if(scale == 20) return "震度2";
- if(scale == 30) return "震度3";
- if(scale == 40) return "震度4";
- if(scale == 45) return "震度5弱";
- if(scale == 50) return "震度5強";
- if(scale == 55) return "震度6弱";
- if(scale == 60) return "震度6強";
- if(scale == 70) return "震度7";
+ if(scale==10)return "震度1";
+ if(scale==20)return "震度2";
+ if(scale==30)return "震度3";
+ if(scale==40)return "震度4";
+ if(scale==45)return "震度5弱";
+ if(scale==50)return "震度5強";
+ if(scale==55)return "震度6弱";
+ if(scale==60)return "震度6強";
+ if(scale==70)return "震度7";
  return scale;
 }
 
 function playEEWSound(type){
-
- if(type === "forecast"){
-  const audio=document.getElementById("forecastSound");
-  audio.currentTime=0;
-  audio.play();
+ if(type==="forecast"){
+   document.getElementById("forecastSound").play();
  }
-
- if(type === "warning"){
-  const audio=document.getElementById("warningSound");
-  audio.currentTime=0;
-  audio.play();
+ if(type==="warning"){
+   document.getElementById("warningSound").play();
  }
-
 }
 
 async function loadQuake(){
@@ -83,43 +69,51 @@ async function loadQuake(){
 
  const data = json[0];
 
- if(!data) return;
+ let text="";
+ let cardClass="card";
 
- if(data.code === 556){
+ if(data.code==556){ // EEW
 
-  const serial = data.issue.serial || "";
-  const place = data.earthquake.hypocenter.name;
-  const mag = data.earthquake.hypocenter.magnitude;
-  const scale = convertScale(data.earthquake.maxScale);
+   const serial = data.issue.serial || "";
+   const place = data.earthquake.hypocenter.name;
+   const mag = data.earthquake.hypocenter.magnitude;
+   const scale = convertScale(data.earthquake.maxScale);
 
-  const uniqueID = data.id + "-" + serial;
-
-  if(uniqueID !== lastID){
-
-   lastID = uniqueID;
-
-   let typeClass="eewForecast";
-   let typeName="予報";
-
-   if(data.issue.type==="Warning"){
-     typeClass="eewWarning";
-     typeName="警報";
-     playEEWSound("warning");
-   }else{
-     playEEWSound("forecast");
+   if(data.issue.type==="Forecast"){
+      cardClass+=" eewForecast";
+      playEEWSound("forecast");
    }
 
-   latestText = `【緊急地震速報 第${serial}報（${typeName}）】
+   if(data.issue.type==="Warning"){
+      cardClass+=" eewWarning";
+      playEEWSound("warning");
+   }
+
+   text=`【緊急地震速報 第${serial}報】
 震源：${place}
-マグニチュード：${mag}
-最大震度：${scale}`;
+M${mag}
+最大${scale}`;
 
-   document.getElementById("quake").innerHTML =
-     `<div class="card ${typeClass}">${latestText}</div>`;
-  }
+ }else{
 
+   const place = data.earthquake.hypocenter.name;
+   const mag = data.earthquake.hypocenter.magnitude;
+   const scale = convertScale(data.earthquake.maxScale);
+
+   text=`【地震情報】
+震源：${place}
+M${mag}
+最大${scale}`;
  }
 
+ latestText=text;
+
+ if(lastID!==data.id){
+   lastID=data.id;
+ }
+
+ document.getElementById("quake").innerHTML=
+ `<div class="${cardClass}">${text}</div>`;
 }
 
 function copyText(){
@@ -127,8 +121,8 @@ function copyText(){
  alert("コピーしました");
 }
 
-setInterval(loadQuake,5000);
 loadQuake();
+setInterval(loadQuake,5000);
 
 </script>
 
